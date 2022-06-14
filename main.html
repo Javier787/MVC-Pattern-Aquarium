@@ -1,0 +1,553 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <script type="text/javascript" src="./imports.js"></script>
+      <script type="text/javascript" src="./models.js"></script>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+
+    </style>
+  </head>
+  <body onload="init()">
+    <center>
+      <canvas id="myCanvas" width="600" height="600"></canvas>
+    </center>
+    <script>
+      window.requestAnimFrame = (function(callback) {
+        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
+        function(callback) {
+          window.setTimeout(callback, 1000 / 60);
+        };
+      })();
+
+      var canvas = document.getElementById('myCanvas');
+      var ctx = canvas.getContext('2d', { alpha: false });
+
+      function init(){
+        initKeys(canvas)
+        drawPlant()
+        drawPlant2()
+        drawPlant3()
+
+        drawJellyFish(ctx)
+        drawSmallRock()
+        drawBlowFish(ctx)
+
+      }
+
+      function initKeys(canvas) {
+        //canvas.setAttribute('tabindex','0');
+        canvas.focus();
+        canvas.addEventListener("click", onClick, true);
+      }
+
+      function onClick(event){
+        // Click capture event for crab
+        var crabTime = new Date().getTime()
+        if(crabModel.x < event.clientX && event.clientX <  crabModel.x + crabModel.width  ){
+          if(crabModel.y < event.clientY && event.clientY < crabModel.y + crabModel.height ){
+            crabModel.clicked = true;
+            bubblesModel.crab = true;
+          }
+        }
+
+        // Click event  capture for puffer fish
+        if(blowFishModel.x < event.clientX && event.clientX <  blowFishModel.x + blowFishModel.width  ){
+          if(blowFishModel.y < event.clientY && event.clientY < blowFishModel.y + blowFishModel.height ){
+            console.log("puffer clicked");
+            blowFishModel.clicked = true;
+            bubblesModel.blow = true;
+          }
+        }
+
+        // Click event capture for the angel fish
+        if(angelFishModel.x < event.clientX && event.clientX <  angelFishModel.x + angelFishModel.width  ){
+          if(angelFishModel.y  < event.clientY && event.clientY < angelFishModel.y + angelFishModel.height ){
+            console.log("angel clicked");
+            angelFishModel.clicked = true;
+            bubblesModel.angel = true;
+
+          }
+        }
+
+        // Click event for puffer fish
+        if(jellyFishHeadModel.x < event.clientX && event.clientX <  jellyFishHeadModel.x + jellyFishHeadModel.width  ){
+          if(jellyFishHeadModel.y  < event.clientY && event.clientY < jellyFishHeadModel.y + jellyFishHeadModel.height ){
+            console.log("jelly");
+            jellyFishHeadModel.clicked = true;
+            bubblesModel.jelly = true;
+          }
+        }
+        console.log(event);
+
+      }
+
+      // Main animation loop
+      function animate(canvas, ctx, startTime) {
+        var time = new Date().getTime() - startTime;
+        var amplitude = 100;
+
+        var centerX = canvas.width - blowFishModel.x/1.5 ; // Get center of the invisible bounding box
+        var centerY = canvas.height / 2 - blowFishModel.y / 2;
+        var nextX = amplitude * Math.sin(time * 2 * Math.PI / blowFishModel.period) + centerX; //Sinosoidual
+        var nextY = amplitude * Math.cos(time * 3 * Math.PI / blowFishModel2.period) + centerY;
+
+        // Update
+        blowFishModel.x = nextX
+        blowFishModel.y = nextY
+
+        //Move clownfish
+        centerX = canvas.width / 2 + clownFishModel.x / 2;
+        centerY = canvas.height / 2 + clownFishModel.y / 2;
+        nextX = amplitude * Math.sin(time * 2 * Math.PI / clownFishModel.period) + centerX;
+        nextY = amplitude * Math.cos(time * 3 * Math.PI / clownFishModel.period) + centerY;
+
+        clownFishModel.x = nextX;
+        clownFishModel.y = nextY;
+        clownFishModel.x += clownFishModel.vx
+        clownFishModel.y += clownFishModel.vy
+
+        // Move seahorse
+        offsetX = seaHorseModel.x/2 + 200
+        offsetY = seaHorseModel.y/2 + 200
+        seaHorseModel.x  = amplitude * Math.sin(time * 1.5 * Math.PI / seaHorseModel.period) + offsetX ;
+        seaHorseModel.y = -amplitude * Math.cos(time * 2 * Math.PI / seaHorseModel.period) + offsetY ;
+
+
+        //Move jellyfish
+        centerY = jellyFishHeadModel.y / 2;
+        nextY = amplitude * Math.cos(time * 2 * Math.PI / jellyFishHeadModel.period) + centerY;
+
+        jellyFishHeadModel.y = nextY;
+        jellyFishHeadModel.y *= jellyFishHeadModel.vy;
+
+        // Scene parent dependency
+        jellyFishTentaclesModel.y = jellyFishHeadModel.y
+
+
+        amplitude= 100
+        centerX = crabModel.x / 2;
+        nextX = amplitude * Math.cos(time * 0.5 * Math.PI / crabModel.period) + centerX/2 + 300;
+
+        // Check if true to pinch and unpinch crab
+        if(crabModel.clicked == true)
+          crabModel.crabTime = time + 2000
+        crabModel.x = nextX
+        crabModel.elapsed = time
+
+
+        //Testing
+        angelFishModel.time = time
+        if(angelFishModel.onTheRight == true)
+          angelFishModel.angelTime = time + 3000
+        //
+
+        // Main draw
+        draw()
+
+        // request new frame
+        requestAnimFrame(function() {
+          animate(canvas, ctx, startTime);
+        });
+      }
+
+      //callback
+      setTimeout(function() {
+        var startTime = new Date().getTime();
+        animate(canvas, ctx, startTime);
+      });
+
+      //Change period dynamically
+      function periodChanger(){
+        blowFishModel.period= Math.floor((Math.random()*1000))
+        console.log(blowFishModel.period);
+      }
+
+      //
+      function drawBlowFish(ctx) {
+        //Check if clicked is true to modify the blowfish
+        if(blowFishModel.clicked == true){
+           // Blow the blowfish up
+          if(blowFishModel.initHeight < blowFishModel.height){
+            blowFishModel.initHeight += .5
+            blowFishModel.initWidth+= .5
+            ctx.drawImage(blowFishImage2,blowFishModel.x,blowFishModel.y,blowFishModel.initWidth, blowFishModel.initHeight)
+          }else{
+            // Rotate around the trayectory the blowfish up
+            blowFishModel.angle += 0.2
+            ctx.save()
+            ctx.translate(blowFishModel.x,blowFishModel.y);
+            ctx.rotate(blowFishModel.angle*Math.PI/180);
+            ctx.translate(-blowFishModel.x,-blowFishModel.y);
+            ctx.drawImage(blowFishImage,blowFishModel.x,blowFishModel.y,blowFishModel.width, blowFishModel.height);
+            ctx.restore()
+            }
+            //Draw the blowfish normally
+          } else {
+            ctx.drawImage(blowFishImage2,blowFishModel.x,blowFishModel.y,blowFishModel.initWidth, blowFishModel.initHeight)
+
+        }
+
+      }
+      // Scale the fine by checking the max and mins
+      function scaleFan(){
+        if(fanModel.atMax ==  true)
+        {
+          fanModel.scaleX -=.03; //Scale down
+          fanModel.scaleY -=.03;
+          fanModel.x +=.015; // half od the scaling factor to keep in center
+          fanModel.y +=.015;
+          if(fanModel.scaleX <120)
+            fanModel.atMax =  false;
+
+        }
+        if(fanModel.atMax ==  false)
+        {
+          fanModel.scaleX +=.03;
+          fanModel.scaleY +=.03;
+          fanModel.x -=.015;
+          fanModel.y -=.015;
+          if(fanModel.scaleX >130)
+            fanModel.atMax =  true;
+        }
+      }
+      // Scale the fine by checking the max and mins
+      function scaleFan2(){
+        if(fan2Model.atMax ==  true)
+        {
+          fan2Model.scaleX -=.02;
+          fan2Model.scaleY -=.02;
+          fan2Model.x +=.01;
+          fan2Model.y +=.01;
+          if(fan2Model.scaleX < 120)
+            fan2Model.atMax =  false;
+
+        }
+        if(fan2Model.atMax ==  false)
+        {
+          fan2Model.scaleX +=.02;
+          fan2Model.scaleY +=.02;
+          fan2Model.x -=.01;
+          fan2Model.y -=.01;
+          if(fan2Model.scaleX >130)
+            fan2Model.atMax =  true;
+        }
+
+      }
+
+      // Scale the fine by checking the max and mins
+      function scaleTube(){
+        if(tubeModel.atMax == true)
+        {
+          tubeModel.scaleX -=.06;
+          tubeModel.scaleY -=.06;
+          tubeModel.x +=.03;
+          tubeModel.y +=.03;
+          if(tubeModel.scaleX < 120)
+            tubeModel.atMax =  false;
+
+        }
+        if(tubeModel.atMax ==  false)
+        {
+          tubeModel.scaleX +=.06;
+          tubeModel.scaleY +=.06;
+          tubeModel.x -=.03;
+          tubeModel.y -=.03;
+          if(tubeModel.scaleX >130)
+            tubeModel.atMax = true;
+        }
+
+      }
+
+      // Cover the bottom of the tubes
+      function drawSmallRock(){
+        smallRockModel.x = tubeModel.x
+        smallRockModel.y = tubeModel.y + 68
+      }
+
+      // Sprite based plants
+      function drawPlant(){
+        if(plant.currentFrame == plant.totalFrames) { // check the current number of frames on each call
+          plant.shift = 0; // reset
+          plant.currentFrame = 0;
+        }
+        plant.currentFrame++;
+
+        // update every .5 seconds
+        setTimeout(function() {
+          drawPlant()},500);
+        plant.shift += plant.frameWidth
+      }
+
+      // Sprite based plants
+      function drawPlant2(){
+        if (plant2.currentFrame == plant2.totalFrames) {
+          plant2.shift = 0;
+          plant2.currentFrame = 0;
+        }
+        plant2.currentFrame++;
+
+        setTimeout(function() {
+          drawPlant2()},700);
+        plant2.shift += plant.frameWidth
+
+      }
+
+      // Sprite based plants
+      function drawPlant3(){
+        if (plant3.currentFrame == plant3.totalFrames) {
+          plant3.shift = 0;
+          plant3.currentFrame = 0;
+        }
+        plant3.currentFrame++;
+
+        setTimeout(function() {
+          drawPlant3()},900);
+        plant3.shift += plant3.frameWidth
+
+      }
+
+      function drawAngelFish(ctx){
+
+        centerX = canvas.width / 2
+        centerY = canvas.height / 2
+
+        nextX1 = 200 * Math.cos(angelFishModel.time *2 * Math.PI / angelFishModel.period) + centerX;
+        nextY1 = 200 * Math.sin(angelFishModel.time *2 * Math.PI / angelFishModel.period) + centerY;
+
+        nextX2 = nextX1
+        nextY2 = -200 * Math.sin(angelFishModel.time * 2 * Math.PI / angelFishModel.period) + centerY; // negative so that it stay on the bottom coordinates
+
+
+        if(nextX1 > angelFishModel.oldX ){ // trajectory one way
+          if(angelFishModel.clicked == false){ // Draw normally
+            ctx.drawImage(angelFishFlipImage, angelFishModel.x,angelFishModel.y, angelFishModel.width,angelFishModel.height);
+          }else{
+            if(angelFishModel2.initHeight < angelFishModel2.height){ //Scale baby fish up to its max
+              ctx.drawImage(angelFishFlipImage2, angelFishModel2.x,angelFishModel2.y, angelFishModel2.initWidth,angelFishModel2.initHeight);
+              ctx.drawImage(angelFishFlipImage, angelFishModel.x,angelFishModel.y, angelFishModel.width,angelFishModel.height);
+              angelFishModel2.initHeight++
+              angelFishModel2.initWidth++
+            }else{
+              ctx.drawImage(angelFishFlipImage2, angelFishModel2.x,angelFishModel2.y, angelFishModel2.width,angelFishModel2.height); //Flip
+              ctx.drawImage(angelFishFlipImage, angelFishModel.x,angelFishModel.y, angelFishModel.width,angelFishModel.height);
+            }
+          }
+
+          //Update trajectory
+          angelFishModel.x = nextX2;
+          angelFishModel.y = nextY2;
+
+          angelFishModel.x *= angelFishModel.vx;
+          angelFishModel.y *= angelFishModel.vy;
+
+
+          angelFishModel2.x = angelFishModel.x;
+          angelFishModel2.y = angelFishModel.y;
+
+          angelFishModel2.x *= angelFishModel2.vx;
+          angelFishModel2.y *= angelFishModel2.vx;
+
+          angelFishModel2.x += 50;
+          angelFishModel2.y += 50;
+
+
+        } else {  // trayectory the other way
+          if(angelFishModel.clicked == false){// Draw normally
+            ctx.drawImage(angelFishImage, angelFishModel.x,angelFishModel.y, angelFishModel.width,angelFishModel.height);
+          }else{
+            if(angelFishModel2.initHeight < angelFishModel2.height){//Scale baby fish up to its max
+              ctx.drawImage(angelFishImage2, angelFishModel2.x,angelFishModel2.y, angelFishModel2.initWidth,angelFishModel2.initHeight);
+              ctx.drawImage(angelFishImage, angelFishModel.x,angelFishModel.y, angelFishModel.width,angelFishModel.height);
+              angelFishModel2.initHeight++
+              angelFishModel2.initWidth++
+            }else{
+              ctx.drawImage(angelFishImage2, angelFishModel2.x,angelFishModel2.y, angelFishModel2.width,angelFishModel2.height);
+              ctx.drawImage(angelFishImage, angelFishModel.x,angelFishModel.y, angelFishModel.width,angelFishModel.height);
+            }
+
+          }
+
+          // update motion
+          angelFishModel.x = nextX1;
+          angelFishModel.y = nextY1;
+
+          angelFishModel.x *= angelFishModel.vx ;
+          angelFishModel.y *= angelFishModel.vy;
+
+
+          angelFishModel2.x = angelFishModel.x;
+          angelFishModel2.y = angelFishModel.y;
+
+          angelFishModel2.x *= angelFishModel2.vx;
+          angelFishModel2.y *= angelFishModel2.vx;
+
+          angelFishModel2.x += 50;
+          angelFishModel2.y += 50;
+
+        }
+
+        if(nextY1 < angelFishModel.oldY1){ // Check old an young
+
+          if(angelFishModel.angelTime < angelFishModel.time){
+            angelFishModel.x = 0
+            angelFishModel.y = 0
+
+            angelFishModel.vx = 0
+            angelFishModel.vy = 0
+          }
+        }
+        angelFishModel.oldX = nextX1;
+        angelFishModel.oldY = nextY1;
+      }
+
+      // Background fish function. Essentially it's just drawing a big rotating circle
+      function drawBackgroundFish(ctx){
+        ctx.save();
+        ctx.translate(backgroundFishModel.x, backgroundFishModel.y);
+        ctx.rotate(backgroundFishModel.angle  * Math.PI/180);
+        backgroundFishModel.angle += .2;
+        ctx.drawImage(backgroundFishImage, -backgroundFishModel.x, -backgroundFishModel.y,   1000, 1000);
+        ctx.restore();
+
+      }
+
+      // Update tentacles
+      function drawJellyFish(){
+        if(jellyFishTentaclesModel.currentFrame == jellyFishTentaclesModel.totalFrames) {// Check current frame
+          jellyFishTentaclesModel.shift = 0;
+          jellyFishTentaclesModel.currentFrame = 0;
+        }
+        jellyFishTentaclesModel.currentFrame++;
+
+        setTimeout(function() {
+          drawJellyFish()},600);
+
+        jellyFishTentaclesModel.shift += jellyFishTentaclesModel.frameWidth
+
+      }
+
+      // Update head on click
+      function drawJellyHeadFish(ctx){
+        if(jellyFishHeadModel.clicked){
+          ctx.drawImage(jellyFishHeadImage2,jellyFishHeadModel.x, jellyFishHeadModel.y, jellyFishHeadModel.width,jellyFishHeadModel.height )
+
+        }else{
+          ctx.drawImage(jellyFishHeadImage,jellyFishHeadModel.x, jellyFishHeadModel.y, jellyFishHeadModel.width,jellyFishHeadModel.height )
+        }
+
+      }
+
+      // Check crab state and switch back
+      function drawCrab(ctx){
+        if(crabModel.clicked == true)
+          crabModel.clicked = false
+
+        if(crabModel.crabTime < crabModel.elapsed ){
+          ctx.drawImage(crabImage, crabModel.x,crabModel.y, crabModel.width,crabModel.height)
+
+        }else{
+          ctx.drawImage(crabFlipImage, crabModel.x,crabModel.y,  crabModel.width,crabModel.height)
+        }
+      }
+
+      // Draw bubbles depending on which obejct was clicked
+      function drawBubbles(ctx){
+        //Add bubble for crab fish on click
+        if(bubblesModel.crab == true){
+          if(bubblesModel.initCrabRadius < bubblesModel.crabRadius ){
+            ctx.drawImage(bubbleImage, tubeModel.x+20, bubblesModel.crabY -30,bubblesModel.initCrabRadius,bubblesModel.initCrabRadius)
+            bubblesModel.initCrabRadius++
+          }else{
+            ctx.drawImage(bubbleImage, tubeModel.x+20, bubblesModel.crabY -30 , bubblesModel.crabRadius,bubblesModel.crabRadius)
+            bubblesModel.crabY -= 0.2;
+            if(bubblesModel.crabY < 0){// check if bubble reaches canvas top to reset
+              bubblesModel.crabY= tubeModel.y +30
+              bubblesModel.initCrabRadius = 0;
+            }
+          }
+        }
+
+        //Add bubble for angelfish on click
+        if(bubblesModel.angel == true){
+          if(bubblesModel.initAngelRadius < bubblesModel.angelRadius ){
+            ctx.drawImage(bubbleImage, tubeModel.x+100, bubblesModel.angelY -30,bubblesModel.initAngelRadius,bubblesModel.initAngelRadius)
+            bubblesModel.initAngelRadius++
+          }else{
+            ctx.drawImage(bubbleImage, tubeModel.x+100, bubblesModel.angelY -30 , bubblesModel.angelRadius,bubblesModel.angelRadius)
+            bubblesModel.angelY -= 0.6;
+            if(bubblesModel.angelY < 0){// check if bubble reaches canvas top to reset
+              bubblesModel.angelY= tubeModel.y +30
+              bubblesModel.initAngelRadius = 0;
+            }
+          }
+        }
+
+        //Add bubble for blowfish fish on click
+        if(bubblesModel.jelly == true){
+          if(bubblesModel.initJellyRadius < bubblesModel.jellyRadius ){
+            ctx.drawImage(bubbleImage, tubeModel.x+60, bubblesModel.jellyY -30,bubblesModel.initJellyRadius,bubblesModel.initJellyRadius)
+            bubblesModel.initJellyRadius++
+          }else{
+            ctx.drawImage(bubbleImage, tubeModel.x+60, bubblesModel.jellyY -30 , bubblesModel.jellyRadius,bubblesModel.jellyRadius)
+            bubblesModel.jellyY -= 0.5;
+            if(bubblesModel.jellyY < 0){// check if bubble reaches canvas top to reset
+              bubblesModel.jellyY= tubeModel.y +30
+              bubblesModel.initJellyRadius = 0;
+            }
+          }
+        }
+
+        //Add bubble for crab fish on click
+        if(bubblesModel.blow == true){
+          if(bubblesModel.blowInitRadius < bubblesModel.blowRadius ){
+            ctx.drawImage(bubbleImage, tubeModel.x + 40, bubblesModel.blowY -30,bubblesModel.blowInitRadius,bubblesModel.blowInitRadius)
+            bubblesModel.blowInitRadius++
+          }else{
+            ctx.drawImage(bubbleImage, tubeModel.x + 40, bubblesModel.blowY -30 , bubblesModel.blowRadius,bubblesModel.blowRadius)
+            bubblesModel.blowY -= 0.3;
+            if(bubblesModel.blowY < 0){ // check if bubble reaches canvas top to reset
+              bubblesModel.blowY= tubeModel.y + 30
+              bubblesModel.blowInitRadius = 0;
+            }
+          }
+        }
+      }
+
+      // Draws on scene in order from background to foreground
+      function draw(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        scaleFan()
+        scaleFan2()
+        scaleTube()
+        ctx.drawImage(backgroundImage,0,0)
+        drawBackgroundFish(ctx)
+        ctx.drawImage(rock6, 0,0)
+        ctx.drawImage(rock5, 0,0)
+        drawBlowFish(ctx)
+        ctx.drawImage(plantImage2, plant2.shift-300 ,0, plant2.frameWidth, plant2.frameHeight, plant2.x,plant2.y,plant2.frameWidth/2,plant.frameHeight/2)
+        ctx.drawImage(plantImage1, plant.shift-300 ,0, plant.frameWidth , plant.frameHeight, plant.x, plant.y,plant.frameWidth/2,plant.frameHeight/2)
+        ctx.drawImage(seaHorseImage,seaHorseModel.x,seaHorseModel.y,seaHorseModel.scaleX,seaHorseModel.scaleY)
+        ctx.drawImage(rock4, 0,0)
+        ctx.drawImage(plantImage3, plant3.shift-300 ,0, plant3.frameWidth, plant3.frameHeight, plant3.x,plant3.y,plant3.frameWidth/2,plant3.frameHeight/2)
+        ctx.drawImage(fan2Image, fan2Model.x, fan2Model.y, fan2Model.scaleX,fan2Model.scaleY)
+        ctx.drawImage(rock3,0,0)
+        ctx.drawImage(seaStarImage, seaStarModel.x,seaStarModel.y, seaStarModel.width, seaStarModel.height)
+        ctx.drawImage(tubeImage,tubeModel.x,tubeModel.y,tubeModel.scaleX,tubeModel.scaleY)
+        ctx.drawImage(smallRockImage,smallRockModel.x,smallRockModel.y,smallRockModel.scaleX,smallRockModel.scaleY)
+        drawCrab(ctx)
+        ctx.drawImage(clownFish, clownFishModel.x, clownFishModel.y, 30, 30);
+        ctx.drawImage(rock2,0,0)
+        ctx.drawImage(fanImage, fanModel.x, fanModel.y, fanModel.scaleX,fanModel.scaleY)
+        ctx.drawImage(rock1, 0,0)
+        ctx.drawImage(jellyFishTentaclesImage, jellyFishTentaclesModel.shift - 300 ,0, jellyFishTentaclesModel.frameWidth, jellyFishTentaclesModel.frameHeight, jellyFishTentaclesModel.x+jellyFishTentaclesModel.factorX,jellyFishHeadModel.y + jellyFishTentaclesModel.factorY,jellyFishTentaclesModel.frameWidth/3,jellyFishTentaclesModel.frameHeight/3)
+        drawJellyHeadFish(ctx)
+        drawAngelFish(ctx)
+        drawBubbles(ctx)
+      }
+    </script>
+  </body>
+</html>
